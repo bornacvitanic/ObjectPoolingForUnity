@@ -13,5 +13,5 @@
  
  And to return it to the pool use:
 ```
- instance.SetActive(false);
+ ObjectPooler.SharedInstance.ReturnToPool(instance);
 ```

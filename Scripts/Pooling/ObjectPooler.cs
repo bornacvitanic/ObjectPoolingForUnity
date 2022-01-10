@@ -6,16 +6,23 @@ public class ObjectPooler : MonoBehaviour
 {
     public static ObjectPooler SharedInstance { get; private set; }
 
+    [Tooltip("Whether pooled objects should return to pool upon being disabled.")]
+    [SerializeField] private bool returnOnDisable = false;
+
+    [Tooltip("Specify GameObject to be used as parent for all instances that have been taken out of the pool without having been reparented.")]
     public GameObject dynamic;
 
     public Dictionary<string,Queue<GameObject>> pooledObjects;
+    public Dictionary<string, int> instantiatedObjectCount;
     [Header("Optional")]
+    [Tooltip("Scriptable Object which automatically tracks the max number of instances of each prefab between sessions.")]
     [SerializeField] private ObjectPoolPrefabList prefabs;
 
     void Awake()
     {
         SharedInstance = this;
         pooledObjects = new Dictionary<string, Queue<GameObject>>();
+        instantiatedObjectCount = new Dictionary<string, int>();
         if(prefabs != null)
         {
             StartCoroutine("PreloadPool");
@@ -31,9 +38,10 @@ public class ObjectPooler : MonoBehaviour
             {
                 pooledObjects.Add(pair.prefab.name, new Queue<GameObject>());
             }
-            for(int i = 0; i< pair.frequency/2; i++)
+            GameObject temp;
+            for(int i = 0; i< pair.frequency; i++)
             {
-                GameObject temp = CreateNewInstance(pair.prefab, Vector3.zero, Quaternion.identity);
+                temp = CreateNewInstance(pair.prefab, Vector3.zero, Quaternion.identity);
                 ReturnObject(temp);
             }
         }
@@ -66,9 +74,9 @@ public class ObjectPooler : MonoBehaviour
         {
             ObjectPoolPrefabList.PoolPrefabs temp = prefabs.poolPrefabs[i];
             temp.prefab = prefabs.poolPrefabs[i].prefab;
-            if(pooledObjects[prefabs.poolPrefabs[i].prefab.name].Count > temp.frequency)
+            if(instantiatedObjectCount[prefabs.poolPrefabs[i].prefab.name] > temp.frequency)
             {
-                temp.frequency = pooledObjects[prefabs.poolPrefabs[i].prefab.name].Count;
+                temp.frequency = instantiatedObjectCount[prefabs.poolPrefabs[i].prefab.name];
             }
             tempList.Add(temp);
         }
@@ -78,10 +86,18 @@ public class ObjectPooler : MonoBehaviour
 
     private GameObject CreateNewInstance(GameObject prefab, Vector3 position, Quaternion rotation)
     {
-        GameObject newObject = UnityEngine.Object.Instantiate(prefab, position, rotation);
+        GameObject newObject = Object.Instantiate(prefab, position, rotation);
         newObject.AddComponent<ReturnToPool>();
+        newObject.GetComponent<ReturnToPool>().prefabName = prefab.name;
+        newObject.GetComponent<ReturnToPool>().returnOnDisable = returnOnDisable;
         newObject.transform.parent = dynamic.transform;
         newObject.SetActive(true);
+        if(!instantiatedObjectCount.ContainsKey(prefab.name))
+        {
+            instantiatedObjectCount.Add(prefab.name, 0);
+
+        }
+        instantiatedObjectCount[prefab.name]++;
         return newObject;
     }
 
@@ -134,8 +150,9 @@ public class ObjectPooler : MonoBehaviour
     {
         returnedObject.transform.parent = transform;
         returnedObject.SetActive(false);
-        var key = returnedObject.name.Substring(0, returnedObject.name.Length - "(Clone)".Length);
-        pooledObjects[key].Enqueue(returnedObject);
+        string prefabName = returnedObject.GetComponent<ReturnToPool>().prefabName;
+        returnedObject.name = string.Concat(prefabName, "(Clone)");
+        pooledObjects[prefabName].Enqueue(returnedObject);
     }
 
     public void DestroyAllObjects()

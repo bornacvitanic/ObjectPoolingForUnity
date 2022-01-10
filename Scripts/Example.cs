@@ -35,7 +35,7 @@ public class Example : MonoBehaviour
             {
                 for(int i = instances.Count-1; i>=0; i--)
                 {
-                    instances[i].SetActive(false); // To return object to pool, just disable it, the attached ReturnToPool sctipt will handle the rest.
+                    ObjectPooler.SharedInstance.ReturnToPool(instances[i]); // Returning instance to the object pool
                     instances.Remove(instances[i]);
                 }
                 instance = null;

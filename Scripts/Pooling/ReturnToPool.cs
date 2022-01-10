@@ -2,14 +2,20 @@ using UnityEngine;
 
 public class ReturnToPool : MonoBehaviour
 {
+    [HideInInspector] public string prefabName;
+    [HideInInspector] public bool returnOnDisable = false;
+
     private void OnEnable()
     {
-        hideFlags = HideFlags.HideInInspector;
+        //hideFlags = HideFlags.HideInInspector;
     }
 
     private void OnDisable()
     {
-        Invoke("Return", 0.01f);
+        if(returnOnDisable)
+        {
+            Invoke("Return", 0.01f);
+        }
     }
 
     public void Return()
@@ -18,7 +24,9 @@ public class ReturnToPool : MonoBehaviour
         {
             return;
         }
-
-        ObjectPooler.SharedInstance.ReturnObject(gameObject);
+        if(!gameObject.transform.parent == ObjectPooler.SharedInstance.transform) //Check if already in pool
+        {
+            ObjectPooler.SharedInstance.ReturnObject(gameObject);
+        }
     }
 }
