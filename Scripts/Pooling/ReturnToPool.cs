@@ -24,7 +24,7 @@ public class ReturnToPool : MonoBehaviour
         {
             return;
         }
-        if(!gameObject.transform.parent == ObjectPooler.SharedInstance.transform) //Check if already in pool
+        if (gameObject.transform.parent != ObjectPooler.SharedInstance.transform) //Check if already in pool
         {
             ObjectPooler.SharedInstance.ReturnObject(gameObject);
         }

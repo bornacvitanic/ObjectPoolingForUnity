@@ -8,7 +8,7 @@ public class ReturnChildrenToPoolOnDestroy : MonoBehaviour
     {
         foreach(ReturnToPool r in GetComponentsInChildren<ReturnToPool>())
         {
-            r.gameObject.SetActive(false);
+            r.Return();
         }
     }
 }

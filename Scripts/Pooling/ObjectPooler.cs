@@ -84,13 +84,13 @@ public class ObjectPooler : MonoBehaviour
     }
     #endregion
 
-    private GameObject CreateNewInstance(GameObject prefab, Vector3 position, Quaternion rotation)
+    private GameObject CreateNewInstance(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
     {
         GameObject newObject = Object.Instantiate(prefab, position, rotation);
         newObject.AddComponent<ReturnToPool>();
         newObject.GetComponent<ReturnToPool>().prefabName = prefab.name;
         newObject.GetComponent<ReturnToPool>().returnOnDisable = returnOnDisable;
-        newObject.transform.parent = dynamic.transform;
+        newObject.transform.parent = parent ? parent : dynamic.transform;
         newObject.SetActive(true);
         if(!instantiatedObjectCount.ContainsKey(prefab.name))
         {
@@ -107,7 +107,7 @@ public class ObjectPooler : MonoBehaviour
         objInstance.transform.rotation = rotation;
     }
 
-    public GameObject Instantiate(GameObject prefab, Vector3? position = null, Quaternion? rotation = null)
+    public GameObject Instantiate(GameObject prefab, Vector3? position = null, Quaternion? rotation = null, Transform parent = null)
     {
         Vector3 _position = Vector3.zero;
         Quaternion _rotation = Quaternion.identity;
@@ -126,7 +126,7 @@ public class ObjectPooler : MonoBehaviour
                 try{
                     GameObject tempObject = pooledObjects[prefab.name].Dequeue();
                     PositionAndRotateObject(tempObject, _position, _rotation);
-                    tempObject.transform.parent = dynamic.transform;
+                    tempObject.transform.parent = parent ? parent : dynamic.transform;
                     tempObject.SetActive(true);
                     return tempObject;
                 }
